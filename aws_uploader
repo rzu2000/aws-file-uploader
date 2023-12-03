@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [ $# -lt 2 ]
+then
+    echo "Please enter at least 1 file to upload, first space is for the bucket name, subsequent spaces are for file names."
+    exit 1
+fi
+
+bucket_name=$1
+
+if aws s3 mb s3://$bucket_name 2>&1 | grep -q "BucketAlreadyExists"
+then
+    echo "This bucket $bucket_name is already taken and not owned , please enter another bucket name."
+    exit 1
+else
+    echo "Bucket $bucket_name created successfully, or already exists and is owned by you."
+fi
+
+for file in "${@:2}"
+do
+    if [ ! -e "$file" ]
+    then
+        echo "This file could not be found: $file"
+    fi
+
+    if aws s3 cp $file s3://$bucket_name 2>&1 | grep -q "upload:"
+    then
+        echo "$file successfully uploaded."
+    else
+        echo "ERROR UPLOADING $file"
+    fi
+
+done
